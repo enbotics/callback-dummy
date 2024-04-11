@@ -6,7 +6,7 @@ import { createClient } from 'redis';
 const app = express();
 const port = 5001;
 
-const REDIS_PORT = 6378;
+const REDIS_PORT = 6381;
 
 // Create and start Redis server
 const server = new RedisServer(REDIS_PORT);
