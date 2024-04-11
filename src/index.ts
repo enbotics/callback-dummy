@@ -6,7 +6,7 @@ import { createClient } from 'redis';
 const app = express();
 const port = 5001;
 
-const REDIS_PORT = 6379;
+const REDIS_PORT = 6378;
 
 // Create and start Redis server
 const server = new RedisServer(REDIS_PORT);
@@ -27,11 +27,21 @@ server.open(async (err) => {
   // Configure Express server
   app.use(cors());
 
+  app.get('/favicon.ico', (req, res) => {
+    res.status(204);
+  })
+
+  app.get('/robots.txt', (req, res) => {
+    res.send('User-agent: *\nDisallow: /');
+  }
+  );
+
   app.get('/requests', async (req, res) => {
     try {
 
       // Get last 10 requests from Redis
       const requests = await client.lRange('requests', -10, -1);
+
       res.json(requests.reverse());
     } catch (error) {
       console.error('Error getting requests from Redis:', error);
@@ -50,13 +60,18 @@ server.open(async (err) => {
 
 
       const uri = req.url;
+      const body = req.body;
+
       const timestamp = new Date()
         // GMT +8 timezone
         .toLocaleString('en-US', { timeZone: 'Asia/Singapore' })
-      const result = await client.rPush('requests', `${timestamp} - ${req.method} - ${uri}`);
+
+      const result = await client.rPush('requests', `${timestamp} - ${req.method} - ${uri} - ${JSON.stringify(body)}`);
+
       res.send(`Saved request to: ${result} at ${timestamp}`);
     } catch (error) {
       console.error('Error saving request to Redis:', error);
+      return res.status(500).send('Internal Server Error');
     }
 
   });
