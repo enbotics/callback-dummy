@@ -76,6 +76,27 @@ server.open(async (err) => {
 
   });
 
+  app.post('*', async (req, res) => {
+    // Save incoming request uri and timestamp to Redis
+
+    try {
+
+      const uri = req.url;
+      const body = req.body;
+
+      const timestamp = new Date()
+        // GMT +8 timezone
+        .toLocaleString('en-US', { timeZone: 'Asia/Singapore' })
+
+      const result = await client.rPush('requests', `${timestamp} - ${req.method} - ${uri} - ${JSON.stringify(body)}`);
+
+      res.send(`Saved request to: ${result} at ${timestamp}`);
+    } catch (error) {
+      console.error('Error saving request to Redis:', error);
+      return res.status(500).send('Internal Server Error');
+    }
+  });
+
 
   // Start Express server
   app.listen(port, () => {
